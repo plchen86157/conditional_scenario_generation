@@ -1,0 +1,280 @@
+# About:    superclass for data preprocessor
+# Author:   Jianbang LIU
+# Date:     2021.01.30
+import copy
+import os
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+from matplotlib import pyplot as plt
+
+import torch
+from torch.utils.data import Dataset, DataLoader
+
+from argoverse.utils.mpl_plotting_utils import visualize_centerline
+
+
+class Preprocessor(Dataset):
+    """
+    superclass for all the trajectory data preprocessor
+    those preprocessor will reformat the data in a single sequence and feed to the system or store them
+    """
+    def __init__(self, root_dir, algo="tnt", obs_horizon=20, obs_range=30, pred_horizon=30):
+        self.root_dir = root_dir            # root directory stored the dataset
+
+        #print("base_root:", self.root_dir)
+
+        self.algo = algo                    # the name of the algorithm
+        self.obs_horizon = obs_horizon      # the number of timestampe for observation
+        self.obs_range = obs_range          # the observation range
+        self.pred_horizon = pred_horizon    # the number of timestamp for prediction
+
+        self.split = None
+
+    def __getitem__(self, idx):
+        raise NotImplementedError
+
+    def __len__(self):
+        """ the total number of sequence in the dataset """
+        raise NotImplementedError
+
+    def process(self, dataframe: pd.DataFrame, seq_id: str, map_feat=True):
+        """
+        select filter the data frame, output filtered data frame
+        :param dataframe: DataFrame, the data frame
+        :param seq_id: str, the sequence id
+        :param map_feat: bool, output map feature or not
+        :return: DataFrame[(same as orignal)]
+        """
+        raise NotImplementedError
+
+    def extract_feature(self, dataframe: pd.DataFrame, map_feat=True):
+        """
+        select and filter the data frame, output filtered frame feature
+        :param dataframe: DataFrame, the data frame
+        :param map_feat: bool, output map feature or not
+        :return: DataFrame[(same as orignal)]
+        """
+        raise NotImplementedError
+
+    def encode_feature(self, *feats):
+        """
+        encode the filtered features to specific format required by the algorithm
+        :feats dataframe: DataFrame, the data frame containing the filtered data
+        :return: DataFrame[POLYLINE_FEATURES, GT, TRAJ_ID_TO_MASK, LANE_ID_TO_MASK, TARJ_LEN, LANE_LEN]
+        """
+        raise NotImplementedError
+
+    def save(self, dataframe: pd.DataFrame, file_name, dir_=None):
+        """
+        save the feature in the data sequence in a single csv files
+        :param dataframe: DataFrame, the dataframe encoded
+        :param set_name: str, the name of the folder name, exp: train, eval, test
+        :param file_name: str, the name of csv file
+        :param dir_: str, the directory to store the csv file
+        :return:
+        """
+        #print("base_filename:", file_name)
+        if not isinstance(dataframe, pd.DataFrame):
+            return
+
+        if not dir_:
+            dir_ = os.path.join(os.path.split(self.root_dir)[0], "intermediate", self.split + "_intermediate", "raw")
+        else:
+            dir_ = os.path.join(dir_, self.split + "_intermediate", "raw")
+
+        #print(os.path.exists(dir_))
+        if not os.path.exists(dir_):
+            os.makedirs(dir_)
+
+        fname = f"features_{file_name}.pkl"
+        dataframe.to_pickle(os.path.join(dir_, fname))
+        # print("[Preprocessor]: Saving data to {} with name: {}...".format(dir_, fname))
+
+    def process_and_save(self, dataframe: pd.DataFrame, seq_id, dir_=None, map_feat=True, data_num=1):
+        """
+        save the feature in the data sequence in a single csv files
+        :param dataframe: DataFrame, the data frame
+        :param set_name: str, the name of the folder name, exp: train, eval, test
+        :param file_name: str, the name of csv file
+        :param dir_: str, the directory to store the csv file
+        :return:
+        """
+        #print("seq_id", seq_id)
+        for data_index in range(data_num):
+            new_seq_id, df_processed = self.process(dataframe, seq_id, map_feat, data_index)
+            print(new_seq_id)
+            self.save(df_processed, new_seq_id, dir_)
+        # plt.show()
+        # exit()
+
+        return []
+
+    @staticmethod
+    def uniform_candidate_sampling(sampling_range, rate=30):
+        """
+        uniformly sampling of the target candidate
+        :param sampling_range: int, the maximum range of the sampling
+        :param rate: the sampling rate (num. of samples)
+        return rate^2 candidate samples
+        """
+        x = np.linspace(-sampling_range, sampling_range, rate)
+        return np.stack(np.meshgrid(x, x), -1).reshape(-1, 2)
+
+    # implement a candidate sampling with equal distance;
+    def lane_candidate_sampling(self, centerline_list, distance=0.5, viz=False):
+        """the input are list of lines, each line containing"""
+        candidates = []
+        candidates_with_id = []
+        for line_id, line in enumerate(centerline_list):
+            for i in range(len(line) - 1):
+                if np.any(np.isnan(line[i])) or np.any(np.isnan(line[i+1])):
+                    continue
+                [x_diff, y_diff] = line[i+1] - line[i]
+                if x_diff == 0.0 and y_diff == 0.0:
+                    continue
+                candidates.append(line[i])
+
+                ######## for lane id ########
+                candidates_with_id.append(np.array([line[i][0], line[i][1], line_id, i]))
+                ######## for lane id ########
+
+                
+                # compute displacement along each coordinate
+                den = np.hypot(x_diff, y_diff) + np.finfo(float).eps
+                d_x = distance * (x_diff / den)
+                d_y = distance * (y_diff / den)
+
+                num_c = np.floor(den / distance).astype(np.int)
+                pt = copy.deepcopy(line[i])
+                for j in range(num_c):
+                    pt += np.array([d_x, d_y])
+                    candidates.append(copy.deepcopy(pt))
+                # ######## for lane id ########
+                # pt_with_id = line[i]
+                # for j in range(num_c):
+                #     pt_with_id += np.array([d_x, d_y, line, i])
+                #     candidates_with_id.append(pt_with_id)
+                #     print(pt_with_id)
+                # ######## for lane id ########
+                
+        candidates = np.unique(np.asarray(candidates), axis=0)
+
+        if viz:
+            print("viz")
+            fig = plt.figure(0, figsize=(8, 7))
+            fig.clear()
+            for centerline_coords in centerline_list:
+                visualize_centerline(centerline_coords)
+            plt.scatter(candidates[:, 0], candidates[:, 1], marker="*", c="g", alpha=1, s=6.0, zorder=15)
+            plt.xlabel("Map X")
+            plt.ylabel("Map Y")
+            plt.axis("off")
+            plt.title("No. of lane candidates = {}; No. of target candidates = {};".format(len(centerline_list), len(candidates)))
+            plt.show(block=False)
+        
+        # check same point with different lane id
+        dict_by_first_two = {}
+        # for arr in candidates_with_id:
+        #     key = tuple(arr[:2])
+        #     if key not in dict_by_first_two:
+        #         dict_by_first_two[key] = []
+        #     dict_by_first_two[key].append(arr)
+        # for key, arrays in dict_by_first_two.items():
+        #     if len(arrays) > 1:
+        #         print(f"Key {key} has the following arrays with different last two elements:")
+        #         for arr in arrays:
+        #             print(arr)
+        for arr in candidates_with_id:
+            key = tuple(arr[:2])
+            if key not in dict_by_first_two:
+                dict_by_first_two[key] = arr
+        candidates_with_id = list(dict_by_first_two.values())
+        candidates_with_id = np.unique(np.asarray(candidates_with_id), axis=0)
+        return candidates, candidates_with_id
+
+    @staticmethod
+    def get_candidate_gt(target_candidate, gt_target):
+        """
+        find the target candidate closest to the gt and output the one-hot ground truth
+        :param target_candidate, (N, 2) candidates
+        :param gt_target, (1, 2) the coordinate of final target
+        """
+        displacement = gt_target - target_candidate
+        gt_index = np.argmin(np.power(displacement[:, 0], 2) + np.power(displacement[:, 1], 2))
+
+        onehot = np.zeros((target_candidate.shape[0], 1))
+        onehot[gt_index] = 1
+
+        offset_xy = gt_target - target_candidate[gt_index]
+        return onehot, offset_xy
+    
+    @staticmethod
+    def get_candidate_gt_each_point_with_offset_GT(target_candidate, gt_target, multi_target_GT, multi_target_GT_num=None, target_GT_on_distance=False, target_GT_on_distance_scale=0):
+        """
+        find the target candidate closest to the gt and output the one-hot ground truth
+        :param target_candidate, (N, 2) candidates
+        :param gt_target, (N, 2) the coordinate of final target
+        """
+        displacement = gt_target - target_candidate
+        
+        if target_GT_on_distance:
+            dist = np.sqrt(np.power(displacement[:, 0], 2) + np.power(displacement[:, 1], 2))
+            gt_index = [i for i, num in enumerate(dist) if num < target_GT_on_distance_scale]
+        elif multi_target_GT:
+            gt_index = np.argsort(np.power(displacement[:, 0], 2) + np.power(displacement[:, 1], 2))[:multi_target_GT_num]
+        else:
+            gt_index = np.argmin(np.power(displacement[:, 0], 2) + np.power(displacement[:, 1], 2))
+
+        onehot = np.zeros((target_candidate.shape[0], 1))
+        onehot[gt_index] = 1
+
+        offset_xy_if_correct_point = gt_target - target_candidate[gt_index]
+        #print(gt_target.reshape(2, 1).repeat(target_candidate.shape[0], 1).swapaxes(1, 0).shape)
+        offset_xy_each = gt_target.reshape(2, 1).repeat(target_candidate.shape[0], 1).swapaxes(1, 0) - target_candidate
+        return onehot, offset_xy_if_correct_point, offset_xy_each
+
+    @staticmethod
+    def plot_target_candidates(candidate_centerlines, traj_obs, traj_fut, candidate_targets):
+        fig = plt.figure(1, figsize=(8, 7))
+        fig.clear()
+
+        # plot centerlines
+        for centerline_coords in candidate_centerlines:
+            visualize_centerline(centerline_coords)
+
+        # plot traj
+        plt.plot(traj_obs[:, 0], traj_obs[:, 1], "x-", color="#d33e4c", alpha=1, linewidth=1, zorder=15)
+        # plot end point
+        plt.plot(traj_obs[-1, 0], traj_obs[-1, 1], "o", color="#d33e4c", alpha=1, markersize=6, zorder=15)
+        # plot future traj
+        plt.plot(traj_fut[:, 0], traj_fut[:, 1], "+-", color="b", alpha=1, linewidth=1, zorder=15)
+
+        # plot target sample
+        plt.scatter(candidate_targets[:, 0], candidate_targets[:, 1], marker="*", c="green", alpha=1, s=6, zorder=15)
+
+        plt.xlabel("Map X")
+        plt.ylabel("Map Y")
+        plt.axis("off")
+        plt.title("No. of lane candidates = {}; No. of target candidates = {};".format(len(candidate_centerlines),
+                                                                                       len(candidate_targets)))
+        # plt.show(block=False)
+        # plt.pause(0.01)
+        plt.show()
+
+
+# example of preprocessing scripts
+if __name__ == "__main__":
+    processor = Preprocessor("raw_data")
+    loader = DataLoader(processor,
+                        batch_size=16,
+                        num_workers=16,
+                        shuffle=False,
+                        pin_memory=False,
+                        drop_last=False)
+
+    for i, data in enumerate(tqdm(loader)):
+        pass
+
+
+
