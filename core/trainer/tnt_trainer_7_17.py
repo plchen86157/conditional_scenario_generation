@@ -374,8 +374,6 @@ class TNTTrainer(Trainer):
         self.m = m
 
         # debug
-        pred_length = 8
-
         out_dict = {}
         out_cnt = 0
         collision_ratio = 1.0
@@ -672,6 +670,9 @@ class TNTTrainer(Trainer):
                 batch_tp_cls_acc = accuracy_score(np.array(tp_index.cpu()), np.array(gt_attacker_list))           
                 all_tp_cls_acc += batch_tp_cls_acc
 
+                tem = [1, 2, 3, 4]
+                print(tem[2:])
+
                 # print(pred_target[0].shape, pred_target[0].topk(1, dim=0), data.candidate.view(-1, data.candidate_len_max[0], 2)[0][1012])
                 # for i in range(data.candidate.view(-1, data.candidate_len_max[0], 2).shape[1]):
                 #     print(data.candidate.view(-1, data.candidate_len_max[0], 2)[0][i])
@@ -692,8 +693,7 @@ class TNTTrainer(Trainer):
                         now_scenario = seq_ids[s]
                         # if now_scenario.split('_')[6].split('-')[-1] != '0218':
                         #    continue
-                        # print(now_scenario)
-                        # if now_scenario != 'data_hcis_v4.6_trainval_boston-seaport_LTAP_scene-0594_2-2-0.8333333333333334-18_97.87_831b2f71e061472ea179506eb8c49914':
+                        # if now_scenario != 'data_hcis_v4.6_trainval_singapore-onenorth_RE_scene-0151_4-1-0.0-8_0.28_d4ce5315a6f04c70a994c9ae34933728':
                         #     continue
                         # print(now_scenario)
                         if plot_target_point_before_regression or plot_regression_based_on_RCNN:
@@ -1000,7 +1000,7 @@ class TNTTrainer(Trainer):
                         #             , vehicle_length, (gt_yaw_np[s]) * np.pi / 180]
                         
                         
-                        check_upper_bound_of_sim = False
+                        check_upper_bound_of_sim = True
                         att_yaw_pred_to_GT_flag = False
                         if check_upper_bound_of_sim:
                             pred_target_point[s][0][0] = gt_trajectories[now_scenario][-1][0]
@@ -1268,8 +1268,8 @@ class TNTTrainer(Trainer):
                         #######################
                         # min_t = ttc_pred[s].cpu().numpy()[0] / 10
                         # max_t = min_t + dt
-                        gt_ttc = ttc - 8 + 1            ###data.horizon[s].cpu().numpy()  # data: 10~16  e.g. 10: 5~5.5
-                        # print(now_scenario, 'ttc:', ttc, gt_ttc)
+                        gt_ttc = ttc - 8             ###data.horizon[s].cpu().numpy()  # data: 10~16  e.g. 10: 5~5.5
+                        print(now_scenario, 'ttc:', ttc, gt_ttc)
                         min_t = gt_ttc * dt
                         max_t = min_t + dt
                         # min_t = gt_ttc * dt - dt / 2
@@ -1290,12 +1290,12 @@ class TNTTrainer(Trainer):
                         # attacker quintic
                         for track_id, remain_df in sce_df.groupby("TRACK_ID"):
                             if str(track_id) == str(guess_attacker_id):
-                                tp_start_x = remain_df.X.values[pred_length - 1] #[8]
-                                tp_start_y = remain_df.Y.values[pred_length - 1] #[8]
-                                tp_start_yaw = remain_df.YAW.values[pred_length - 1] * np.pi / 180
-                                tp_sv = remain_df.V.values[pred_length - 1] #[8]
+                                tp_start_x = remain_df.X.values[8]
+                                tp_start_y = remain_df.Y.values[8]
+                                tp_start_yaw = remain_df.YAW.values[8] * np.pi / 180
+                                tp_sv = remain_df.V.values[8]
                                 tp_gv = remain_df.V.values[-1]
-                                sa = (remain_df.V.values[pred_length - 1] - remain_df.V.values[pred_length - 2]) / dt
+                                sa = (remain_df.V.values[8] - remain_df.V.values[7]) / dt
                                 ga = (remain_df.V.values[-1] - remain_df.V.values[-2]) / dt
                         tp_gx = pred_target_point[s][0][0] + tar_offset_pred[s][0]
                         tp_gy = pred_target_point[s][0][1] + tar_offset_pred[s][1]
@@ -1311,20 +1311,18 @@ class TNTTrainer(Trainer):
                         # print("time limit:", min_t, max_t)
                         # print("start x:", tp_start_x)
                         # dt = 0.1
-                        # print("t:", min_t, max_t)
+                        print("t:", min_t, max_t)
                         tp_time, tp_x, tp_y, tp_all_yaw, tp_all_v, tp_a, tp_j = quintic_polynomials_planner(
                             tp_start_x, tp_start_y, tp_start_yaw, tp_sv, sa, float(tp_gx), float(tp_gy), float(tp_gyaw), tp_gv, ga, max_accel, max_jerk, dt, min_t, max_t)
                         tp_pos = np.array((tp_x, tp_y)).T
                         tp_yaw_v = np.array((tp_all_v, tp_all_yaw)).T
-                        # print(tp_start_x, tp_start_y, float(tp_gx), float(tp_gy), tp_pos)
-                        #### No need start point
-                        tp_pos = tp_pos[1:]
-                        tp_yaw_v = tp_yaw_v[1:]
+                        print(tp_start_x, tp_start_y, float(tp_gx), float(tp_gy), tp_pos)
+                        print("tp_pos:", tp_pos.shape)
+                        tp_pos = tp_pos
                         vehicle_list = []
-
                         
                         temp_yaw_dist = abs(tp_gyaw.cpu().numpy()[0] % (2 * np.pi) - tp_all_yaw[-1] % (2 * np.pi))
-                        # print(temp_yaw_dist * 180 / np.pi, tp_gx == tp_pos[-1][0] and tp_gy == tp_pos[-1][1])
+                        print(temp_yaw_dist * 180 / np.pi, tp_gx == tp_pos[-1][0] and tp_gy == tp_pos[-1][1])
                         yaw_average_dist += temp_yaw_dist
                         if temp_yaw_dist * 180 / np.pi < 3:
                             temp_yaw_align = True
@@ -1340,8 +1338,8 @@ class TNTTrainer(Trainer):
                         ttc_with_yaw_dict[ttc].append(temp_yaw_dist * 180 / np.pi)
 
                         
-                        ##################### No filter anything theoretical
-                        collision_moment = sce_df.TIMESTAMP.values[pred_length - 1 +gt_ttc]
+                        ##################### initial scenario is 4 frames
+                        collision_moment = sce_df.TIMESTAMP.values[8+gt_ttc]
                         sce_df = sce_df[(sce_df.TIMESTAMP <= collision_moment)]
                         #####################
                         for track_id, remain_df in sce_df.groupby("TRACK_ID"):
@@ -1353,18 +1351,17 @@ class TNTTrainer(Trainer):
                             #     remain_df.iloc[8:, 5] = ego_yaw_v[:, 1]
                             if str(track_id) == str(guess_attacker_id):
                                 #print(len(remain_df.X.values), tp_pos.shape, 8+gt_ttc)
+                                print(remain_df)
                                 remain_df.iloc[8:, 3] = tp_pos[:, 0]
                                 remain_df.iloc[8:, 4] = tp_pos[:, 1]
                                 remain_df.iloc[8:, 2] = tp_yaw_v[:, 0]
                                 remain_df.iloc[8:, 5] = tp_yaw_v[:, 1] * 180 / np.pi
-                                # remain_df.iloc[8:, 3] = tp_pos[1:, 0]
-                                # remain_df.iloc[8:, 4] = tp_pos[1:, 1]
-                                # remain_df.iloc[8:, 2] = tp_yaw_v[1:, 0]
-                                # remain_df.iloc[8:, 5] = tp_yaw_v[1:, 1] * 180 / np.pi
+                                print(remain_df)
+                                exit()
                             vehicle_list.append(remain_df)
                         
                         traj_df = pd.concat(vehicle_list)
-                        # traj_df.to_csv('output_csv/' + now_scenario + '.csv', index=False)
+                        traj_df.to_csv('output_csv/' + now_scenario + '.csv', index=False)
                         frame_num = len(set(traj_df.TIMESTAMP.values))
                         further_list = []
                         further_df = traj_df
@@ -1425,24 +1422,6 @@ class TNTTrainer(Trainer):
                         # collision_flag, real_yaw_dist, attacker_right_flag, record_yaw_distance = self.cal_cr_and_similarity(further_df, attacker_id)
                         ### Interpolation for moving foward ###
 
-                        need_forward_no_interp = False
-                        more_frames = 4
-                        if need_forward_no_interp:
-                            # forward_df = pd.DataFrame(columns=['TRACK_ID', 'TIMESTAMP', 'V', 'X', 'Y', 'YAW'])
-                            forward_df = traj_df
-                            for track_id, remain_df in traj_df.groupby("TRACK_ID"):
-                                dis_x = (remain_df.iloc[frame_num-1, 3] - remain_df.iloc[frame_num-2, 3])
-                                dis_y = (remain_df.iloc[frame_num-1, 4] - remain_df.iloc[frame_num-2, 4])
-                                if dis_x > 10 or dis_y > 10:
-                                    dis_x, dis_y = 0, 0 
-                                for fps_f_index in range(1, more_frames+1):
-                                    t = {'TRACK_ID':[track_id], 'TIMESTAMP':[remain_df.iloc[frame_num-1, 1] + fps_f_index * 500000],
-                                        'V':[remain_df.iloc[frame_num-1, 2]], 'X':[remain_df.iloc[frame_num-1, 3] + fps_f_index * dis_x],
-                                        'Y':[remain_df.iloc[frame_num-1, 4] + fps_f_index * dis_y], 'YAW':[remain_df.iloc[frame_num-1, 5]]}
-                                    df_insert = pd.DataFrame(t)
-                                    forward_df = pd.concat([forward_df, df_insert], ignore_index=True)
-                            forward_df.to_csv('output_csv_foward_no_interp/' + now_scenario + '.csv', index=False)
-
                         inter_df = pd.DataFrame(columns=['TRACK_ID', 'TIMESTAMP', 'V', 'X', 'Y', 'YAW'])
                         if interpolation_every_frame:
                             for track_id, remain_df in traj_df.groupby("TRACK_ID"):
@@ -1478,10 +1457,6 @@ class TNTTrainer(Trainer):
                                               'Y':[remain_df.iloc[origin_f_index-1, 4] + fps_f_index * dis_y], 'YAW':[remain_df.iloc[origin_f_index-1, 5]]}
                                         df_insert = pd.DataFrame(t)
                                         inter_df = pd.concat([inter_df, df_insert], ignore_index=True)
-                            
-                            
-                            # inter_df.to_csv('output_csv_interp/' + now_scenario + '_foward.csv', index=False)
-                            
                             ### Interpolation for moving foward with higher FPS###
                             for track_id, remain_df in inter_df.groupby("TRACK_ID"):
                                 more_frames = 4 * frame_multiple
@@ -1503,7 +1478,6 @@ class TNTTrainer(Trainer):
                                     inter_df = pd.concat([inter_df, df_insert], ignore_index=True)
                             ### Interpolation for moving foward with higher FPS###
                         inter_df.to_csv('output_csv_moving_foward_interpolation/' + now_scenario + '_foward.csv', index=False)
-                        
 
 
 
@@ -1533,11 +1507,6 @@ class TNTTrainer(Trainer):
                         
                         collision_flag, real_yaw_dist, attacker_right_flag, record_yaw_distance = self.cal_cr_and_similarity(further_df, attacker_id)
                         ### Interpolation for moving foward with higher FPS###
-                        # print(now_scenario, collision_flag, attacker_right_flag)
-                        if collision_flag == 0:
-                            print(collision_flag, attacker_right_flag, now_scenario)
-                        if collision_flag == 2:
-                            inter_df.to_csv('attacker_other_iou_in_test/' + now_scenario + '.csv', index=False)
 
                         if collision_flag:
                             pred_collision_rate += 1
@@ -1955,8 +1924,8 @@ class TNTTrainer(Trainer):
         plt.savefig(save_folder + '/Correct lane id ratio distribution when failed.png')
         plt.close()
 
-        plot_detailed_distribution_when_failed = False
-        if plot_detailed_distribution_when_failed and not check_upper_bound_of_sim:
+        plot_detailed_distribution_when_failed = True
+        if plot_detailed_distribution_when_failed:
             if not os.path.isdir(save_folder + '/'+ 'failed_analysis'):
                 os.mkdir(save_folder + '/failed_analysis')
             now_type_list = ['JC', 'LTAP', 'LC', 'OD', 'RE']
@@ -2061,24 +2030,22 @@ class TNTTrainer(Trainer):
         # plt.show()
         # plt.close()
         type_name_list = ["LC", "HO", "RE", "JC", "LTAP", "All", "-"]
-
-        all_right_col_num = col_LTAP_num + col_junction_crossing_num + col_lane_change_num + col_opposite_direction_num + col_rear_end_num
         
         for degree_i in range(len(degree_list)):
             sim_all_scene_np[degree_i] = round((sim_lane_change_np[degree_i] + sim_opposite_direction_np[degree_i] + sim_rear_end_np[degree_i] + \
-                                             sim_junction_crossing_np[degree_i] + sim_LTAP_np[degree_i]) / all_right_col_num, 2)
-            sim_lane_change_np[degree_i] = round(sim_lane_change_np[degree_i] / col_lane_change_num, 2)
-            sim_opposite_direction_np[degree_i] = round(sim_opposite_direction_np[degree_i] / col_opposite_direction_num, 2)
-            sim_rear_end_np[degree_i] = round(sim_rear_end_np[degree_i] / col_rear_end_num, 2)
-            sim_junction_crossing_np[degree_i] = round(sim_junction_crossing_np[degree_i] / col_junction_crossing_num, 2)
-            sim_LTAP_np[degree_i] = round(sim_LTAP_np[degree_i] / col_LTAP_num, 2)        
+                                             sim_junction_crossing_np[degree_i] + sim_LTAP_np[degree_i]) / all_data_num, 2)
+            sim_lane_change_np[degree_i] = round(sim_lane_change_np[degree_i] / lane_change_all, 2)
+            sim_opposite_direction_np[degree_i] = round(sim_opposite_direction_np[degree_i] / opposite_direction_all, 2)
+            sim_rear_end_np[degree_i] = round(sim_rear_end_np[degree_i] / rear_end_all, 2)
+            sim_junction_crossing_np[degree_i] = round(sim_junction_crossing_np[degree_i] / junction_crossing_all, 2)
+            sim_LTAP_np[degree_i] = round(sim_LTAP_np[degree_i] / LTAP_all, 2)        
         type_sim_list = [sim_lane_change_np, sim_opposite_direction_np, sim_rear_end_np, sim_junction_crossing_np, sim_LTAP_np, sim_all_scene_np]
         type_cr_list = [str(round(col_lane_change_num / lane_change_all, 2)), str(round(col_opposite_direction_num / opposite_direction_all, 2)),
                         str(round(col_rear_end_num / rear_end_all, 2)), str(round(col_junction_crossing_num / junction_crossing_all, 2)),
                           str(round(col_LTAP_num / LTAP_all, 2)), str(round((col_lane_change_num + col_opposite_direction_num + col_rear_end_num + col_junction_crossing_num + col_LTAP_num) / all_data_num, 2))]
-        type_yaw_list = [str(round(lane_change_yaw_distance / col_lane_change_num, 2)), str(round(opposite_direction_yaw_distance / col_opposite_direction_num, 2)),
-                        str(round(rear_end_yaw_distance / col_rear_end_num, 2)), str(round(junction_crossing_yaw_distance / col_junction_crossing_num, 2)),
-                          str(round(LTAP_yaw_distance / col_LTAP_num, 2)), str(round((lane_change_yaw_distance + opposite_direction_yaw_distance + rear_end_yaw_distance + junction_crossing_yaw_distance + LTAP_yaw_distance) / all_right_col_num, 2))]
+        type_yaw_list = [str(round(lane_change_yaw_distance / lane_change_all, 2)), str(round(opposite_direction_yaw_distance / opposite_direction_all, 2)),
+                        str(round(rear_end_yaw_distance / rear_end_all, 2)), str(round(junction_crossing_yaw_distance / junction_crossing_all, 2)),
+                          str(round(LTAP_yaw_distance / LTAP_all, 2)), str(round((lane_change_yaw_distance + opposite_direction_yaw_distance + rear_end_yaw_distance + junction_crossing_yaw_distance + LTAP_yaw_distance) / all_data_num, 2))]
         print("yaw_align_num:", yaw_align_num)
         print("yaw_average_dist:", (yaw_average_dist * 180 / np.pi) / all_data_num)
         print("perfect_quintic_num:", perfect_quintic_num)
@@ -2285,18 +2252,20 @@ class TNTTrainer(Trainer):
         # print(traj_df)
 
         scenario_length = len(vehicle_list[0])
-        for t in range(1, scenario_length+1):
+        for t in range(1, scenario_length):
             ego_x = ego_list[0].loc[t - 1, 'X']
-            # ego_x_next = ego_list[0].loc[t, 'X']
+            ego_x_next = ego_list[0].loc[t, 'X']
             ego_y = ego_list[0].loc[t - 1, 'Y']
-            # ego_y_next = ego_list[0].loc[t, 'Y']
-            # ego_vec = [ego_y_next - ego_y,
-            #                     ego_x_next - ego_x]
-            # ego_angle = np.rad2deg(angle_vectors(ego_vec, [1, 0])) * np.pi / 180
+            ego_y_next = ego_list[0].loc[t, 'Y']
+            ego_vec = [ego_y_next - ego_y,
+                                ego_x_next - ego_x]
+            ego_angle = np.rad2deg(
+                            angle_vectors(ego_vec, [1, 0])) * np.pi / 180
             # real_ego_angle = ego_list[0].loc[t - 1, 'YAW']
             real_ego_angle = ego_list[0].loc[t - 1, 'YAW'] + 360.0 if ego_list[0].loc[t - 1, 'YAW'] < 0 else ego_list[0].loc[t - 1, 'YAW']
             real_ego_angle = (real_ego_angle + 90.0) * np.pi / 180
-            ego_rec = [ego_x, ego_y, self.vehicle_width, self.vehicle_length, real_ego_angle]
+            ego_rec = [ego_x_next, ego_y_next, self.vehicle_width
+                                            , self.vehicle_length, real_ego_angle]
             x_1 = float(np.cos(
                 ego_rec[4])*(-ego_rec[2]/2) - np.sin(ego_rec[4])*(-ego_rec[3]/2) + ego_rec[0])
             x_2 = float(np.cos(
@@ -2319,14 +2288,12 @@ class TNTTrainer(Trainer):
             plt.fill([x_1, x_2, x_4, x_3], [y_1, y_2, y_4, y_3], '-',  color='pink', alpha=0.5)
             # plt.plot([x_1, x_2, x_4, x_3, x_1], [
             #                             y_1, y_2, y_4, y_3, y_1], '-',  color='lime', markersize=3)
-            attacker_x = attacker_list[0].loc[t-1, 'X']
-            attacker_y = attacker_list[0].loc[t-1, 'Y']
-            # attacker_x_next = attacker_list[0].loc[t, 'X']
-            # attacker_y_next = attacker_list[0].loc[t, 'Y']
+            attacker_x_next = attacker_list[0].loc[t, 'X']
+            attacker_y_next = attacker_list[0].loc[t, 'Y']
             real_attacker_angle = attacker_list[0].loc[t - 1, 'YAW'] + 360.0 if attacker_list[0].loc[t - 1, 'YAW'] < 0 else attacker_list[0].loc[t - 1, 'YAW']
             real_attacker_angle = (real_attacker_angle + 90.0) * np.pi / 180
-            # ego_rec = [attacker_x_next, attacker_y_next, self.vehicle_width, self.vehicle_length, real_attacker_angle]
-            ego_rec = [attacker_x, attacker_y, self.vehicle_width, self.vehicle_length, real_attacker_angle]
+            ego_rec = [attacker_x_next, attacker_y_next, self.vehicle_width
+                                            , self.vehicle_length, real_attacker_angle]
             x_1 = float(np.cos(
                 ego_rec[4])*(-ego_rec[2]/2) - np.sin(ego_rec[4])*(-ego_rec[3]/2) + ego_rec[0])
             x_2 = float(np.cos(
@@ -2352,17 +2319,19 @@ class TNTTrainer(Trainer):
                 if str(now_id) == 'ego':
                     continue
                 real_pred_x = vl[t - 1][3]
-                # real_pred_x_next = vl[t][3]
+                real_pred_x_next = vl[t][3]
                 real_pred_y = vl[t - 1][4]
-                # real_pred_y_next = vl[t][4]
-                # other_vec = [real_pred_y_next - real_pred_y,
-                                        # real_pred_x_next - real_pred_x]
-                # other_angle = np.rad2deg(angle_vectors(other_vec, [1, 0])) * np.pi / 180
+                real_pred_y_next = vl[t][4]
+                other_vec = [real_pred_y_next - real_pred_y,
+                                        real_pred_x_next - real_pred_x]
+                other_angle = np.rad2deg(
+                            angle_vectors(other_vec, [1, 0])) * np.pi / 180
                 real_other_angle = (vl[t - 1][5] + 90.0) * np.pi / 180
                 # other_angle = vl[past_len][4]
                 # ego_angle = ego_list[0][4][int(filename_t) + past_len]
                 #print(ego_x, ego_y, real_pred_x, real_pred_y)
-                ego_rec = [real_pred_x, real_pred_y, self.vehicle_width, self.vehicle_length, real_other_angle]
+                ego_rec = [real_pred_x_next, real_pred_y_next, self.vehicle_width
+                                            , self.vehicle_length, real_other_angle]
                 # ego_rec = [real_pred_x_next, real_pred_y_next, self.vehicle_width
                 #                             , self.vehicle_length, other_angle]
                 
@@ -2388,15 +2357,11 @@ class TNTTrainer(Trainer):
                 #                         y_1, y_2, y_4, y_3, y_1], '-',  color='black', markersize=3)
                 if str(now_id) != str(attacker_id_gt):
                     attacker_other_iou = attacker_polygon.intersection(other_polygon).area / attacker_polygon.union(other_polygon).area
-                    
                     if attacker_other_iou > VEH_COLL_THRESH:
-                        print("attacker early hit")
-                        #print(t, now_id, "other:", attacker_id_gt, real_pred_x, real_pred_y, real_other_angle, "GT attacker:", ego_x, ego_y, real_ego_angle)
-
-                        collision_flag = 2
+                        collision_flag = 1
                         # print(now_id, attacker_other_iou, real_pred_x_next, real_pred_y_next)
                 cur_iou = ego_polygon.intersection(other_polygon).area / ego_polygon.union(other_polygon).area
-                # print(t, now_id, ego_polygon.intersection(other_polygon).area, cur_iou, "GT:", attacker_id_gt, "flag:", collision_flag)
+                # print(t, now_id, ego_polygon.intersection(other_polygon).area, "GT:", attacker_id_gt)
                 
                 if cur_iou > VEH_COLL_THRESH:
                     # print(attacker_id_gt, "COLLIDE!", now_id)
@@ -2415,8 +2380,7 @@ class TNTTrainer(Trainer):
                         right_attacker_flag = 1
                         # Must collide with GT attacker
                         
-                        # real_yaw_distance = angle_vectors(other_vec, ego_vec) * 180 / np.pi
-                        real_yaw_distance = None
+                        real_yaw_distance = angle_vectors(other_vec, ego_vec) * 180 / np.pi
                         record_yaw_distance = (real_ego_angle - real_other_angle) * 180 / np.pi
                         #print(record_yaw_distance)
                     else:
@@ -2451,7 +2415,6 @@ class TNTTrainer(Trainer):
         self.model.eval()
 
         gt_trajectories = {}
-        pred_length = 8
 
         k = self.model.k
         self.m = m
@@ -2727,8 +2690,8 @@ class TNTTrainer(Trainer):
                         start_x = gt_trajectories[now_scenario][0][0].cpu()
                         start_y = gt_trajectories[now_scenario][0][1].cpu()
                         start_yaw = gt_yaw_np[s] * np.pi / 180 
-                        # sa = 0.1
-                        # ga = 0.0
+                        sa = 0.1
+                        ga = 0.0
                         max_accel = 100.0 
                         max_jerk = 10.0
                         #######################
@@ -2736,23 +2699,15 @@ class TNTTrainer(Trainer):
                         #######################
                         # min_t = ttc_pred[s].cpu().numpy()[0] / 10
                         # max_t = min_t + dt
-                        gt_ttc = ttc - 8 + 1###data.horizon[s].cpu().numpy()
-                        # min_t = gt_ttc * dt - dt / 2
-                        # max_t = min_t + 0.1
-                        min_t = gt_ttc * dt
-                        max_t = min_t + dt
+                        gt_ttc = ttc - 8###data.horizon[s].cpu().numpy()
+                        min_t = gt_ttc * dt - dt / 2
+                        max_t = min_t + 0.1
                         # attacker quintic
                         for track_id, remain_df in sce_df.groupby("TRACK_ID"):
                             if str(track_id) == str(guess_attacker_id):
-                                tp_start_x = remain_df.X.values[pred_length - 1] #[8]
-                                tp_start_y = remain_df.Y.values[pred_length - 1] #[8]
-                                tp_start_yaw = remain_df.YAW.values[pred_length - 1] * np.pi / 180
-                                tp_sv = remain_df.V.values[pred_length - 1] #[8]
-                                tp_gv = remain_df.V.values[-1]
-                                sa = (remain_df.V.values[pred_length - 1] - remain_df.V.values[pred_length - 2]) / dt
-                                ga = (remain_df.V.values[-1] - remain_df.V.values[-2]) / dt
-                        tp_gx = pred_target_point[s][0][0] + tar_offset_pred[s][0]
-                        tp_gy = pred_target_point[s][0][1] + tar_offset_pred[s][1]
+                                tp_start_x = remain_df.X.values[8]
+                                tp_start_y = remain_df.Y.values[8]
+                                tp_start_yaw = remain_df.YAW.values[8] * np.pi / 180
                         tp_gx = pred_target_point[s][0][0] + tar_offset_pred[s][0]
                         tp_gy = pred_target_point[s][0][1] + tar_offset_pred[s][1]
                         tp_gyaw = pred_target_point_yaw[s][0][0] + atr_yaw_pred[s]
@@ -2763,11 +2718,10 @@ class TNTTrainer(Trainer):
                             tp_start_x, tp_start_y, tp_start_yaw, tp_sv, sa, tp_gx, tp_gy, tp_gyaw, tp_gv, ga, max_accel, max_jerk, dt, min_t, max_t)
                         tp_pos = np.array((tp_x, tp_y)).T
                         tp_yaw_v = np.array((tp_all_v, tp_all_yaw)).T
-                        tp_pos = tp_pos[1:]
-                        tp_yaw_v = tp_yaw_v[1:]
+                        tp_pos = tp_pos
                         vehicle_list = []
                         ##################### initial scenario is 4 frames
-                        collision_moment = sce_df.TIMESTAMP.values[pred_length - 1 +gt_ttc]
+                        collision_moment = sce_df.TIMESTAMP.values[8+gt_ttc]
                         sce_df = sce_df[(sce_df.TIMESTAMP <= collision_moment)]
                         #####################
                         for track_id, remain_df in sce_df.groupby("TRACK_ID"):

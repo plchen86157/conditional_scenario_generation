@@ -1046,7 +1046,7 @@ if __name__ == "__main__":
 
     
     # for split in ["train", "val", "test"]:
-    for split in ["train", "val"]:
+    for split in ["test"]:
         # construct the preprocessor and dataloader
         argoverse_processor = ArgoversePreprocessor(root_dir=raw_dir, split=split, save_dir=interm_dir)
         print(split)

@@ -214,6 +214,13 @@ class TNT(nn.Module):
 
         # feature encoding
         global_feat, aux_out, aux_gt, target_candidate_fea = self.backbone(data, self.local_fea_subgraph_num)             # [batch_size, time_step_len, global_graph_width]
+        
+        need_save_scenario_map_feat = False
+        if need_save_scenario_map_feat:
+            global_feat_np = global_feat.cpu().detach().numpy()
+            np.save("map_feat/" + data['seq_id'][0], global_feat_np)
+
+        
         #print(aux_gt.shape) #128, 64 # batch_size * vectornet_width
         #print(data.atr_pos_offset, data.atr_yaw_offset) (128, 2) (128)
         

@@ -115,14 +115,14 @@ class TNTLoss(nn.Module):
         object_detection_2module = False
         self.lambda_object_detection_2module = 0.00002 # 0.01 for IOU filter
         # classfication_pos_weight = 0#10
-        self.RCNN_cls = 0.002#0.125 / classfication_pos_weight
+        self.RCNN_cls = 0.001 #0.002#0.125 / classfication_pos_weight
         self.lambda_cls = 0#0.05 / classfication_pos_weight
         # self.lambda_cls = 0.25 # cross-entropy no weight
         # self.lambda_offset = 0.0004#1
-        self.lambda_offset = 0.004#0.0004#0.04#1 # only regress on multi GT
-        self.lambda_yaw = 1#2
-        self.lambda_atr_yaw = 2 
-        self.lambda_atr_offset = 0.04 #0.4 
+        self.lambda_offset = 0.008#0.004#0.0004#0.04#1 # only regress on multi GT
+        self.lambda_yaw = 10#1#2
+        self.lambda_atr_yaw = 20#2 
+        self.lambda_atr_offset = 0.4#0.04 #0.4 
         self.lambda_tp = 10
         self.lambda_aux = 0#0.005 
 

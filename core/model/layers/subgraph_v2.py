@@ -61,7 +61,14 @@ class SubGraph(nn.Module):
                 #import sys
                 #sys.exit()
                 """
-                
+                # print("cluster values:", sub_data.cluster)
+                # print("min cluster:", sub_data.cluster.min())
+                # print("max cluster:", sub_data.cluster.max())
+                # print("cluster dtype:", sub_data.cluster.dtype)
+                assert sub_data.cluster.dtype == torch.int64, "Cluster dtype should be torch.int64"
+                if torch.any(sub_data.cluster < 0):
+                    raise ValueError("Cluster contains negative indices!")
+
                 agg_data = max_pool(sub_data.cluster, sub_data)
                 # print("sub_data:", sub_data)
                 # print("before sub_data.cluster:", sub_data.cluster.shape)

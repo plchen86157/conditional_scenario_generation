@@ -298,6 +298,8 @@ class ArgoverseInMem(InMemoryDataset):
         
         traj_cnt = 0
         #for _, [feat, has_obs] in enumerate(zip(traj_feats, traj_has_obss)):
+
+        #################### Traj #######################
         for _, [feat, has_obs, yaw_feat] in enumerate(zip(traj_feats, traj_has_obss, yaw_feats)):
             # print(feat)
             xy_s = feat[has_obs][:-1, :2]
@@ -316,6 +318,8 @@ class ArgoverseInMem(InMemoryDataset):
             # print(feats)
         
             traj_cnt += 1
+        #################### Traj #######################
+
         # exit()
         # get lane features
         graph = data_seq['graph'].values[0]
@@ -345,7 +349,55 @@ class ArgoverseInMem(InMemoryDataset):
                 edge_index = np.hstack([edge_index, get_traj_edge_index(indices)])
             else:
                 edge_index = np.hstack([edge_index, get_fc_edge_index(indices)])
-        #print(feats.shape, feats)
+
+        return feats, cluster, edge_index, identifier
+
+        # feats = np.empty((0, 11))
+        # edge_index = np.empty((2, 0), dtype=np.int64)
+        # identifier = np.empty((0, 2))
+
+        # yaw_feats = data_seq['yaw_feats'].values[0]
+
+        # # 已注释掉的轨迹相关代码 (TRAJ) ##########
+        # # skip extracting trajectory features
+
+        # # get lane features
+        # graph = data_seq['graph'].values[0]
+        # ctrs = graph['ctrs']
+        # vec = graph['feats']
+        # traffic_ctrl = graph['control'].reshape(-1, 1)
+        # is_turns = graph['turn']
+        # is_intersect = graph['intersect'].reshape(-1, 1)
+        
+        # # 这里不再使用 traj_cnt，直接使用 lane_idcs
+        # lane_idcs = graph['lane_idcs'].reshape(-1, 1)  # 删除 traj_cnt 偏移
+        
+        # steps = np.zeros((len(lane_idcs), 1))
+        # yaw_lane = np.zeros((len(lane_idcs), 1))
+
+        # # 合并所有 lane 特征
+        # feats = np.vstack([feats, np.hstack([ctrs, vec, yaw_lane, steps, traffic_ctrl, is_turns, is_intersect, lane_idcs])])
+
+        # # 构造 cluster 和 edge_index
+        # cluster = copy(feats[:, -1].astype(np.int64))
+        # for cluster_idc in np.unique(cluster):
+        #     [indices] = np.where(cluster == cluster_idc)
+        #     identifier = np.vstack([identifier, np.min(feats[indices, :2], axis=0)])
+            
+        #     if len(indices) <= 1:
+        #         continue  # 如果只包含一个节点，则跳过
+            
+        #     # 只对 lane 特征进行全连接边的构建
+        #     edge_index = np.hstack([edge_index, get_fc_edge_index(indices)])
+
+        # print("cluster values:", cluster)
+        # print("min cluster:", cluster.min())
+        # print("max cluster:", cluster.max())
+        # print("cluster dtype:", cluster.dtype)
+        # assert cluster.dtype == torch.int64, "Cluster dtype should be torch.int64"
+        # if torch.any(cluster < 0):
+        #     raise ValueError("Cluster contains negative indices!")
+
 
 
         return feats, cluster, edge_index, identifier
