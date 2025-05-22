@@ -538,19 +538,19 @@ def cal_cr_and_similarity(traj_df, attacker_id_gt):
         elif str(track_id) == attacker_id_gt:
             attacker_list.append(remain_df.reset_index())
     scenario_length = len(vehicle_list[0])
-    for t in range(1, scenario_length):
+    for t in range(1, scenario_length+1):
         ego_x = ego_list[0].loc[t - 1, 'X']
-        ego_x_next = ego_list[0].loc[t, 'X']
+        # ego_x_next = ego_list[0].loc[t, 'X']
         ego_y = ego_list[0].loc[t - 1, 'Y']
-        ego_y_next = ego_list[0].loc[t, 'Y']
-        ego_vec = [ego_y_next - ego_y,
-                            ego_x_next - ego_x]
-        ego_angle = np.rad2deg(
-                        angle_vectors(ego_vec, [1, 0])) * np.pi / 180
+        # ego_y_next = ego_list[0].loc[t, 'Y']
+        # ego_vec = [ego_y_next - ego_y,
+        #                     ego_x_next - ego_x]
+        # ego_angle = np.rad2deg(
+        #                 angle_vectors(ego_vec, [1, 0])) * np.pi / 180
         # real_ego_angle = ego_list[0].loc[t - 1, 'YAW']
         real_ego_angle = ego_list[0].loc[t - 1, 'YAW'] + 360.0 if ego_list[0].loc[t - 1, 'YAW'] < 0 else ego_list[0].loc[t - 1, 'YAW']
         real_ego_angle = (real_ego_angle + 90.0) * np.pi / 180
-        ego_rec = [ego_x_next, ego_y_next, vehicle_width
+        ego_rec = [ego_x, ego_y, vehicle_width
                                         , vehicle_length, real_ego_angle]
         # print("EGO:", ego_x_next, ego_y_next)
         # print(ego_list)
@@ -576,11 +576,13 @@ def cal_cr_and_similarity(traj_df, attacker_id_gt):
         plt.fill([x_1, x_2, x_4, x_3], [y_1, y_2, y_4, y_3], '-',  color='pink', alpha=0.5)
         # plt.plot([x_1, x_2, x_4, x_3, x_1], [
         #                             y_1, y_2, y_4, y_3, y_1], '-',  color='lime', markersize=3)
-        attacker_x_next = attacker_list[0].loc[t, 'X']
-        attacker_y_next = attacker_list[0].loc[t, 'Y']
+        attacker_x = attacker_list[0].loc[t - 1, 'X']
+        attacker_y = attacker_list[0].loc[t - 1, 'Y']
+        # attacker_x_next = attacker_list[0].loc[t, 'X']
+        # attacker_y_next = attacker_list[0].loc[t, 'Y']
         real_attacker_angle = attacker_list[0].loc[t - 1, 'YAW'] + 360.0 if attacker_list[0].loc[t - 1, 'YAW'] < 0 else attacker_list[0].loc[t - 1, 'YAW']
         real_attacker_angle = (real_attacker_angle + 90.0) * np.pi / 180
-        ego_rec = [attacker_x_next, attacker_y_next, vehicle_width
+        ego_rec = [attacker_x, attacker_y, vehicle_width
                                         , vehicle_length, real_attacker_angle]
         x_1 = float(np.cos(
             ego_rec[4])*(-ego_rec[2]/2) - np.sin(ego_rec[4])*(-ego_rec[3]/2) + ego_rec[0])
@@ -608,19 +610,19 @@ def cal_cr_and_similarity(traj_df, attacker_id_gt):
             if str(now_id) == 'ego':
                 continue
             real_pred_x = vl[t - 1][3]
-            real_pred_x_next = vl[t][3]
+            # real_pred_x_next = vl[t][3]
             real_pred_y = vl[t - 1][4]
-            real_pred_y_next = vl[t][4]
-            other_vec = [real_pred_y_next - real_pred_y,
-                                    real_pred_x_next - real_pred_x]
-            other_angle = np.rad2deg(
-                        angle_vectors(other_vec, [1, 0])) * np.pi / 180
+            # real_pred_y_next = vl[t][4]
+            # other_vec = [real_pred_y_next - real_pred_y,
+            #                         real_pred_x_next - real_pred_x]
+            # other_angle = np.rad2deg(
+            #             angle_vectors(other_vec, [1, 0])) * np.pi / 180
             real_other_angle = vl[t - 1][5] + 360.0 if vl[t - 1][5] < 0 else vl[t - 1][5]
             real_other_angle = (real_other_angle + 90.0) * np.pi / 180
             # other_angle = vl[past_len][4]
             # ego_angle = ego_list[0][4][int(filename_t) + past_len]
             #print(ego_x, ego_y, real_pred_x, real_pred_y)
-            ego_rec = [real_pred_x_next, real_pred_y_next, vehicle_width
+            ego_rec = [real_pred_x, real_pred_y, vehicle_width
                                         , vehicle_length, real_other_angle]
             # ego_rec = [real_pred_x_next, real_pred_y_next, self.vehicle_width
             #                             , self.vehicle_length, other_angle]
@@ -674,7 +676,7 @@ def cal_cr_and_similarity(traj_df, attacker_id_gt):
                     right_attacker_flag = 1
                     # Must collide with GT attacker
                     
-                    real_yaw_distance = angle_vectors(other_vec, ego_vec) * 180 / np.pi
+                    # real_yaw_distance = angle_vectors(other_vec, ego_vec) * 180 / np.pi
                     record_yaw_distance = (real_ego_angle - real_other_angle) * 180 / np.pi
                     plt.fill([x_1, x_2, x_4, x_3], [y_1, y_2, y_4, y_3], '-',  color='darkgreen', alpha=1)
                     #print(record_yaw_distance)
@@ -697,11 +699,11 @@ def cal_cr_and_similarity(traj_df, attacker_id_gt):
     
     return collision_flag, real_yaw_distance, right_attacker_flag, record_yaw_distance
 
-def only_split():
+def only_collision_check():
     train_split = 0.7
     val_split = 0.1
-    # data_path = './yaw_distribution/4.5_4.6_4.7_after_classify' 
-    data_path = './yaw_distribution/4.5_4.6_4.7_after_collide_with_other_check'
+    data_path = './yaw_distribution/4.5_4.6_4.7_after_classify' 
+    # data_path = './yaw_distribution/4.5_4.6_4.7_after_collide_with_other_check_v2'
     output_path = 'nuscenes_data/'
     ttc_all_distribution = []
     collide_with_other_num = 0
@@ -710,95 +712,140 @@ def only_split():
     ratio_cnt = {"JC": 0.6, "LTAP": 1.0, "LC": 1.0, "HO": 0.4, "RE": 0.7}
     for scenario in tqdm(sorted(os.listdir(data_path))):
         type_name = scenario.split('_')[5]
-        # collsion_cnt[type_name] += 1
-        # attacker_id = scenario.split('_')[-1].split('.')[0]
-        # interpolation_for_collision_checking = True
-        # if interpolation_for_collision_checking:
-        #     ############## Interpolation for collision checking (exclude collide with other first) ##############
-        #     frame_multiple = 5
-        #     traj_df = pd.read_csv(data_path + '/' + scenario)
-        #     frame_num = len(set(traj_df.TIMESTAMP.values))
-        #     inter_df = pd.DataFrame(columns=['TRACK_ID', 'TIMESTAMP', 'V', 'X', 'Y', 'YAW'])
-        #     for track_id, remain_df in traj_df.groupby("TRACK_ID"):
-        #         # E.g. 20 frames * 5 times => (20-1)*5+1 = 96 frames
-        #         # for origin_f_index in range(1, frame_num + 1):
-        #         for origin_f_index in range(1, frame_num):
-        #             # print(frame_num, origin_f_ttcindex-1, remain_df.iloc[origin_f_index-1, 3])
-        #             # last frame in original df => further seems to be add last frame
-        #             frame_multiple_for_loop = frame_multiple
-        #             if origin_f_index == frame_num:
-        #                 frame_multiple_for_loop = 1
-        #                 dis_x, dis_y = 0, 0
-        #             else:
-        #                 dis_x = (remain_df.iloc[origin_f_index, 3] - remain_df.iloc[origin_f_index-1, 3]) / frame_multiple
-        #                 dis_y = (remain_df.iloc[origin_f_index, 4] - remain_df.iloc[origin_f_index-1, 4]) / frame_multiple
-        #             # for those padding zero vehicle
-        #             if dis_x > 10 or dis_y > 10:
-        #                 dis_x, dis_y = 0, 0 
-        #             # if track_id == 'f5df5ef1e5624a029ce64dd462556de5':
-        #                 # print(dis_x, dis_y)
-                    
-                    
-        #             for fps_f_index in range(frame_multiple_for_loop):
-        #                 # inter_df.insert(track_id, remain_df.iloc[origin_f_index-1, 1] + fps_f_index * 500000 / frame_multiple,
-        #                 #                 remain_df.iloc[origin_f_index-1, 2], remain_df.iloc[origin_f_index-1, 3] + fps_f_index * dis_x,
-        #                 #                 remain_df.iloc[origin_f_index-1, 4] + fps_f_index * dis_y, remain_df.iloc[origin_f_index-1, 5])
-        #                 # t = {'TRACK_ID':[track_id], 'TIMESTAMP':[remain_df.iloc[origin_f_index-1, 1] + fps_f_index * 500000 / frame_multiple],
-        #                 #       'V':[remain_df.iloc[origin_f_index-1, 2]], 'X':[remain_df.iloc[origin_f_index-1, 3] + fps_f_index * dis_x],
-        #                 #       'Y':[remain_df.iloc[origin_f_index-1, 4]] + fps_f_index * dis_y, 'YAW':[remain_df.iloc[origin_f_index-1, 5]]}
-                        
-        #                 t = {'TRACK_ID':[track_id], 'TIMESTAMP':[remain_df.iloc[origin_f_index-1, 1] + fps_f_index * 500000 / frame_multiple],
-        #                         'V':[remain_df.iloc[origin_f_index-1, 2]], 'X':[remain_df.iloc[origin_f_index-1, 3] + fps_f_index * dis_x],
-        #                         'Y':[remain_df.iloc[origin_f_index-1, 4] + fps_f_index * dis_y], 'YAW':[remain_df.iloc[origin_f_index-1, 5]]}
-        #                 df_insert = pd.DataFrame(t)
-        #                 inter_df = pd.concat([inter_df, df_insert], ignore_index=True)
-        #     ### Interpolation for moving foward with higher FPS###
-        #     for track_id, remain_df in inter_df.groupby("TRACK_ID"):
-        #         more_frames = 4 * frame_multiple
-        #         # trajectory may be a curve, so it should rely on last frame and the previous frame
-        #         dis_x = (remain_df.iloc[(frame_num-1)*frame_multiple-1, 3] - remain_df.iloc[(frame_num-1)*frame_multiple-2, 3])
-        #         dis_y = (remain_df.iloc[(frame_num-1)*frame_multiple-1, 4] - remain_df.iloc[(frame_num-1)*frame_multiple-2, 4])
-        #         all_x, all_y, all_v, all_yaw = [], [], [], []
-        #         for f_index in range(more_frames):
-        #             all_v.append(remain_df.iloc[(frame_num-1)*frame_multiple-1, 2])
-        #             all_x.append(remain_df.iloc[(frame_num-1)*frame_multiple-1, 3] + dis_x * (f_index + 1))
-        #             all_y.append(remain_df.iloc[(frame_num-1)*frame_multiple-1, 4] + dis_y * (f_index + 1))
-        #             all_yaw.append(remain_df.iloc[(frame_num-1)*frame_multiple-1, 5])
-        #         for further_t in range(more_frames):
-        #             b = {'TIMESTAMP': [remain_df.TIMESTAMP.values[-1] + (further_t + 1) * 500000 / frame_multiple], 'TRACK_ID': [track_id],
-        #                 # 'V': [all_v[further_t]ttc], 'X': [x[further_t].cpu().numpy()], 'Y': [y[further_t].cpu().numpy()],
-        #                 'V': [all_v[further_t]], 'X': [all_x[further_t]], 'Y': [all_y[further_t]],
-        #                 'YAW': [all_yaw[further_t]]}
-        #             df_insert = pd.DataFrame(b)
-        #             inter_df = pd.concat([inter_df, df_insert], ignore_index=True)
-            
-        #     collision_flag, real_yaw_dist, attacker_right_flag, record_yaw_distance = cal_cr_and_similarity(inter_df, attacker_id)
-        #     if collision_flag:
-        #         if not attacker_right_flag:
-        #             collide_with_other_num += 1
-        #             continue
-        #     shutil.copyfile(data_path + '/' + scenario, './yaw_distribution/4.5_4.6_4.7_after_collide_with_other_check/' + scenario)
         collsion_cnt[type_name] += 1
-    # print("collide_with_other_num:", collide_with_other_num)
-    # print("collsion_cnt:", collsion_cnt)
+        attacker_id = scenario.split('_')[-1].split('.')[0]
+        interpolation_for_collision_checking = True
+        if interpolation_for_collision_checking:
+            ############## Interpolation for collision checking (exclude collide with other first) ##############
+            frame_multiple = 5
+            traj_df = pd.read_csv(data_path + '/' + scenario)
+            frame_num = len(set(traj_df.TIMESTAMP.values))
+            inter_df = pd.DataFrame(columns=['TRACK_ID', 'TIMESTAMP', 'V', 'X', 'Y', 'YAW'])
+            for track_id, remain_df in traj_df.groupby("TRACK_ID"):
+                # E.g. 20 frames * 5 times => (20-1)*5+1 = 96 frames
+                # for origin_f_index in range(1, frame_num + 1):
+                for origin_f_index in range(1, frame_num):
+                    # print(frame_num, origin_f_ttcindex-1, remain_df.iloc[origin_f_index-1, 3])
+                    # last frame in original df => further seems to be add last frame
+                    frame_multiple_for_loop = frame_multiple
+                    if origin_f_index == frame_num:
+                        frame_multiple_for_loop = 1
+                        dis_x, dis_y = 0, 0
+                    else:
+                        dis_x = (remain_df.iloc[origin_f_index, 3] - remain_df.iloc[origin_f_index-1, 3]) / frame_multiple
+                        dis_y = (remain_df.iloc[origin_f_index, 4] - remain_df.iloc[origin_f_index-1, 4]) / frame_multiple
+                    # for those padding zero vehicle
+                    if dis_x > 10 or dis_y > 10:
+                        dis_x, dis_y = 0, 0 
+                    # if track_id == 'f5df5ef1e5624a029ce64dd462556de5':
+                        # print(dis_x, dis_y)
+                    
+                    
+                    for fps_f_index in range(frame_multiple_for_loop):
+                        # inter_df.insert(track_id, remain_df.iloc[origin_f_index-1, 1] + fps_f_index * 500000 / frame_multiple,
+                        #                 remain_df.iloc[origin_f_index-1, 2], remain_df.iloc[origin_f_index-1, 3] + fps_f_index * dis_x,
+                        #                 remain_df.iloc[origin_f_index-1, 4] + fps_f_index * dis_y, remain_df.iloc[origin_f_index-1, 5])
+                        # t = {'TRACK_ID':[track_id], 'TIMESTAMP':[remain_df.iloc[origin_f_index-1, 1] + fps_f_index * 500000 / frame_multiple],
+                        #       'V':[remain_df.iloc[origin_f_index-1, 2]], 'X':[remain_df.iloc[origin_f_index-1, 3] + fps_f_index * dis_x],
+                        #       'Y':[remain_df.iloc[origin_f_index-1, 4]] + fps_f_index * dis_y, 'YAW':[remain_df.iloc[origin_f_index-1, 5]]}
+                        
+                        t = {'TRACK_ID':[track_id], 'TIMESTAMP':[remain_df.iloc[origin_f_index-1, 1] + fps_f_index * 500000 / frame_multiple],
+                                'V':[remain_df.iloc[origin_f_index-1, 2]], 'X':[remain_df.iloc[origin_f_index-1, 3] + fps_f_index * dis_x],
+                                'Y':[remain_df.iloc[origin_f_index-1, 4] + fps_f_index * dis_y], 'YAW':[remain_df.iloc[origin_f_index-1, 5]]}
+                        df_insert = pd.DataFrame(t)
+                        inter_df = pd.concat([inter_df, df_insert], ignore_index=True)
+            ### Interpolation for moving foward with higher FPS###
+            for track_id, remain_df in inter_df.groupby("TRACK_ID"):
+                more_frames = 4 * frame_multiple
+                # trajectory may be a curve, so it should rely on last frame and the previous frame
+                dis_x = (remain_df.iloc[(frame_num-1)*frame_multiple-1, 3] - remain_df.iloc[(frame_num-1)*frame_multiple-2, 3])
+                dis_y = (remain_df.iloc[(frame_num-1)*frame_multiple-1, 4] - remain_df.iloc[(frame_num-1)*frame_multiple-2, 4])
+                all_x, all_y, all_v, all_yaw = [], [], [], []
+                for f_index in range(more_frames):
+                    all_v.append(remain_df.iloc[(frame_num-1)*frame_multiple-1, 2])
+                    all_x.append(remain_df.iloc[(frame_num-1)*frame_multiple-1, 3] + dis_x * (f_index + 1))
+                    all_y.append(remain_df.iloc[(frame_num-1)*frame_multiple-1, 4] + dis_y * (f_index + 1))
+                    all_yaw.append(remain_df.iloc[(frame_num-1)*frame_multiple-1, 5])
+                for further_t in range(more_frames):
+                    b = {'TIMESTAMP': [remain_df.TIMESTAMP.values[-1] + (further_t + 1) * 500000 / frame_multiple], 'TRACK_ID': [track_id],
+                        # 'V': [all_v[further_t]ttc], 'X': [x[further_t].cpu().numpy()], 'Y': [y[further_t].cpu().numpy()],
+                        'V': [all_v[further_t]], 'X': [all_x[further_t]], 'Y': [all_y[further_t]],
+                        'YAW': [all_yaw[further_t]]}
+                    df_insert = pd.DataFrame(b)
+                    inter_df = pd.concat([inter_df, df_insert], ignore_index=True)
+            
+            collision_flag, real_yaw_dist, attacker_right_flag, record_yaw_distance = cal_cr_and_similarity(inter_df, attacker_id)
+            if collision_flag:
+                if not attacker_right_flag:
+                    collide_with_other_num += 1
+                    continue
+            shutil.copyfile(data_path + '/' + scenario, './yaw_distribution/4.5_4.6_4.7_after_collide_with_other_check_v2/' + scenario)
+        collsion_cnt[type_name] += 1
+    print("collide_with_other_num:", collide_with_other_num)
+    print("collsion_cnt:", collsion_cnt)
     # exit()
 
+def only_balance_and_split():
+    train_split = 0.7
+    val_split = 0.1
+    pred_frames = 8
+    data_path = './yaw_distribution/4.5_4.6_4.7_after_collide_with_other_check'
+    output_path = 'nuscenes_data/'
+    initial_topology_list = []
+    ttc_all_distribution = []
+    ttc_list = []
+    filter_balanced = 0
+    filter_balanced_all = 0
+    filter_balanced_ratio = 0.3
+    collsion_cnt = {"JC": 0, "LTAP": 0, "LC": 0, "HO": 0, "RE": 0}
+    now_cnt = {"JC": 0, "LTAP": 0, "LC": 0, "HO": 0, "RE": 0}
+    ratio_cnt = {"JC": 0.6, "LTAP": 1.0, "LC": 1.0, "HO": 0.4, "RE": 0.7}
+    for scenario in tqdm(sorted(os.listdir(data_path))):
+        type_name = scenario.split('_')[5]
+        collsion_cnt[type_name] += 1
+        ttc = int(scenario.split('_')[7].split('-')[-1])
+        ttc_list.append(ttc)
+        if (ttc == 17 or ttc == 18) and type_name != 'LC' and type_name != 'LTAP': 
+            filter_balanced_all += 1
+    ttc_range_len = max(ttc_list) - min(ttc_list)
+    print("~4.7 min ttc:", min(ttc_list), " ttc_range_length:", ttc_range_len)
+    # Not every topology has waypoints
+    for scenario in tqdm(sorted(os.listdir(output_path + 'initial_topology'))):
+        scenario_name = scenario.split('_')[-1].split('.')[0]
+        initial_topology_list.append(scenario_name)
     for scenario in tqdm(os.listdir(data_path)):
         scenario_type = scenario.split('_')[5]
+        scenario_name = scenario.split('_')[6]
+        scenario_variant = scenario.split('_')[7]
+        original_wrong_norm_ttc = '-' + scenario_variant.split('-')[2] + '-'
+        # print(original_wrong_norm_ttc)
+        if scenario_name not in initial_topology_list:
+            print(scenario_name)
+            continue
         if now_cnt[scenario_type] > collsion_cnt[scenario_type] * ratio_cnt[scenario_type]:
             continue
         ttc = int(scenario.split('_')[7].split('-')[-1])
-        ttc_all_distribution.append(ttc)
+        normalize_ttc = (ttc - min(ttc_list)) / ttc_range_len
+        
+        new_scenario = scenario.replace(original_wrong_norm_ttc, "-" + str(normalize_ttc) + "-")
+
+        if (ttc == 17 or ttc == 18) and scenario_type != 'LC' and scenario_type != 'LTAP':
+            filter_balanced += 1
+            if filter_balanced > filter_balanced_all * filter_balanced_ratio:
+                continue 
+        ttc_all_distribution.append(ttc - pred_frames + 1)
+        # if scenario_name == 'scene-0402':
+        #     print(True)
         now_cnt[scenario_type] += 1
         if now_cnt[scenario_type] < collsion_cnt[scenario_type] * ratio_cnt[scenario_type] * train_split:
-            traj_path = output_path + 'trajectory/train/' + scenario
+            traj_path = output_path + 'trajectory/train/' + new_scenario
         elif collsion_cnt[scenario_type] * ratio_cnt[scenario_type] * train_split < now_cnt[scenario_type] < collsion_cnt[scenario_type] * ratio_cnt[scenario_type] * (train_split + val_split):
-            traj_path = output_path + 'trajectory/val/' + scenario
+            traj_path = output_path + 'trajectory/val/' + new_scenario
         else:
-            traj_path = output_path + 'trajectory/test/' + scenario
-        # shutil.copyfile(data_path + '/' + scenario, traj_path)
+            traj_path = output_path + 'trajectory/test/' + new_scenario
+        shutil.copyfile(data_path + '/' + scenario, traj_path)
     all_num = now_cnt['HO'] + now_cnt['JC'] + now_cnt['LC'] + now_cnt['LTAP'] + now_cnt['RE']
-    
+    print(filter_balanced)
     bins = np.linspace(min(ttc_all_distribution), max(ttc_all_distribution), num=50)
     hist, bins = np.histogram(ttc_all_distribution, bins=bins, density=False)
     plt.bar(bins[:-1], hist, align='center', width=0.8)
@@ -806,10 +853,48 @@ def only_split():
     plt.ylabel('Freq')
     plt.title('TTC distribution')
     # plt.show()
-    plt.savefig('./yaw_distribution/TTC distribution.png')
+    plt.savefig('./yaw_distribution/TTC distribution after balanced.png')
     plt.close()
     print("only split!! now_cnt:", now_cnt)
     print("All scenario:", all_num)
+
+def filter_early_attacker_hit_in_test():
+    data_path = './attacker_other_iou_in_test'
+    need_remove_path_trajectory = 'nuscenes_data/trajectory/test'
+    fitler_list = []
+    for scenario in tqdm(sorted(os.listdir(data_path))):
+        fitler_list.append(scenario)
+    for scenario in tqdm(sorted(os.listdir(need_remove_path_trajectory))):
+        if scenario in fitler_list:
+            print(scenario)
+            os.remove(need_remove_path_trajectory + '/' + scenario)
+    # print(fitler_list)
+
+def build_no_padding_for_baseline():
+    origin_data_path = './nuscenes_data/trajectory'
+    new_path_trajectory = 'nuscenes_data/no_padding_trajectory'
+    split_list = ['train', 'val', 'test']
+    for split in split_list:
+        for scenario in tqdm(sorted(os.listdir(origin_data_path + '/' + split))):
+            df = pd.read_csv(origin_data_path + '/' + split + '/' + scenario)
+            df_filtered = df[(df['X'] != 0) & (df['Y'] != 0)]
+            # df_filtered = df.query('X != 0 & Y != 0')
+            traj_path = new_path_trajectory + '/' + split + '/' + scenario
+            df_filtered.to_csv(traj_path, index=False)
+
+def build_padding_nearest_frame():
+    origin_data_path = './nuscenes_data/trajectory'
+    new_path_trajectory = 'nuscenes_data/padding_nearest_frame_trajectory'
+    split_list = ['train', 'val', 'test']
+    for split in split_list:
+        for scenario in tqdm(sorted(os.listdir(origin_data_path + '/' + split))):
+            df = pd.read_csv(origin_data_path + '/' + split + '/' + scenario)
+            df.loc[df['X'] == 0, 'X'] = None
+            df.loc[df['Y'] == 0, 'Y'] = None
+            df[['X', 'Y']] = df.groupby('TRACK_ID')[['X', 'Y']].apply(lambda group: group.ffill().bfill())
+            traj_path = new_path_trajectory + '/' + split + '/' + scenario
+            df.to_csv(traj_path, index=False)
+
 
 # 4.6 version / & 4.7
 def data_proc_more_TTC():
@@ -1002,12 +1087,8 @@ def data_proc_more_TTC():
         vehicle_pd = pd.DataFrame()
         for track_id, remain_df in df.groupby('TRACK_ID'):
             x_8 = remain_df.X.values[8]
-            y_8 = remain_df.Y.values[8]
-            if x_8 == 0 and y_8 == 0:
-                f_8_vehicles += 1
-                #print("frame 8 filter")
-            else:
-                vehicle_pd = pd.concat([vehicle_pd, remain_df], axis=0)
+            vehicle_pd.to_csv(traj_path, index=False)
+            vehicle_pd = pd.concat([vehicle_pd, remain_df], axis=0)
             #vehicle_list.append(remain_df)
             
         
@@ -1043,7 +1124,7 @@ def data_proc_more_TTC():
                 # print("x:", remain_df.iloc[frame_num-1, 3], remain_df.iloc[frame_num-2, 3])
                 for frame_index in range(frame_num):
                     # if track_id == 'ego':
-                    #     print("v:", remain_df.iloc[frame_index-1, 2])
+                    #     print("v:", remain_df.iloc[frame_index-1, 2])vehicle_pd.to_csv(traj_path, index=False)
                         # print("dis:", dis_x, dis_y)
                     if track_id == 'ego' and remain_df.iloc[frame_index-1, 2] < 2: #dis_x < 0.001 and dis_y < 0.001:
                         stop_ego_flag = 1
@@ -1058,7 +1139,7 @@ def data_proc_more_TTC():
                     all_yaw.append(remain_df.iloc[frame_num-1, 5])
                 for further_t in range(more_frames * frame_multiple):
                     b = {'TIMESTAMP': [remain_df.TIMESTAMP.values[-1] + (further_t + 1) * 500000 / frame_multiple], 'TRACK_ID': [track_id],
-                        # 'V': [all_v[further_t]], 'X': [x[further_t].cpu().numpy()], 'Y': [y[further_t].cpu().numpy()],
+                        # 'V': [all_v[further_t]], 'X': [x[further_t].cpu().numpy()], 'vehicle_pd.to_csv(traj_path, index=False)Y': [y[further_t].cpu().numpy()],
                         'V': [all_v[further_t]], 'X': [all_x[further_t]], 'Y': [all_y[further_t]],
                         'YAW': [all_yaw[further_t]]}
                     df_insert = pd.DataFrame(b)
@@ -1599,5 +1680,10 @@ if __name__ == "__main__":
     # first data_proc, then only_split
     # data_proc()
     # data_proc_more_TTC()
-    only_split()
+
+    # only_collision_check()
+    # only_balance_and_split()
+    # filter_early_attacker_hit_in_test()
+    # build_no_padding_for_baseline()
+    build_padding_nearest_frame()
     

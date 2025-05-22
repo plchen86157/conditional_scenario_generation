@@ -128,10 +128,11 @@ if __name__ == "__main__":
                         # default="/home/jb/projects/Code/trajectory-prediction/TNT-Trajectory-Predition/run/tnt/05-21-07-33/checkpoint_iter26.ckpt",
                         help="resume a checkpoint for fine-tune")
     parser.add_argument("-rm", "--resume_model", type=str,
-                        # default="/home/yoyo/Documents/TNT_Nuscenes/run/tnt/2024-04-20 01:09:21/min_train_loss_TNT.pth")
-                        default="/home/yoyo/Documents/TNT_Nuscenes/run/tnt/2024-06-17 06:09:24/best_eval_TNT.pth") 
-                        # default="/home/yoyo/Documents/TNT_Nuscenes/run/tnt/2024-06-20 05:15:40/min_train_loss_TNT.pth")
-    parser.add_argument("-sd", "--save_dir", type=str, default="/home/yoyo/Documents/TNT_Nuscenes/run/tnt/2024-06-17 06:09:24")
+                        # default="/home/yoyo/Documents/TNT_Nuscenes/run/tnt/2024-07-24 05:23:03/best_eval_TNT.pth")
+                        # default="/home/yoyo/Documents/TNT_Nuscenes/run/tnt/2024-06-17 06:09:24/best_eval_TNT.pth") 
+                        # default="/home/yoyo/Documents/TNT_Nuscenes/run/tnt/2024-07-16 15:37:59/min_train_loss_TNT.pth")
+                        default="/home/yoyo/Documents/TNT_Nuscenes/run/tnt/2024-11-05 12:30:56/final_TNT.pth")
+    parser.add_argument("-sd", "--save_dir", type=str, default="/home/yoyo/Documents/TNT_Nuscenes/run/tnt/2024-07-24 05:23:03")
     parser.add_argument("--loss_curve_path", type=str,
                         default="/home/yoyo/Documents/TNT_Nuscenes/run/tnt/2023-10-29 14:40:57/")
     parser.add_argument("--top_m_bbox", type=int,

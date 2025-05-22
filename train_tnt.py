@@ -99,8 +99,8 @@ def train(args):
         #trainer.save(iter_epoch, min_eval_loss)
         #trainer.save_model("best_eval")
         ###################################################################### 
-        if (iter_epoch + 1) > 0:
-            if (iter_epoch + 1) % args.n_epoch == 0:
+        if (iter_epoch + 1) > 799:
+            if (iter_epoch + 1) % 200 == 0:
                 IOU_over_50, TP_IOU_over_50, tp_selection = trainer.eval_when_training(split='val', iter_epoch=iter_epoch, output_dir=output_dir)
                 tp_selection_lambda = 1 #0.25
                 final_score = IOU_over_50 + TP_IOU_over_50 + tp_selection * tp_selection_lambda
@@ -109,6 +109,7 @@ def train(args):
                     max_score = final_score
                     #trainer.save(iter_epoch, eval_loss)
                     trainer.save_model("best_eval")
+                    trainer.save_model("best_eval_" + str(iter_epoch + 1))
         ######################################################################
 
     #trainer.test()
