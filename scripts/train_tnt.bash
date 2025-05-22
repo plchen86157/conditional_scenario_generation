@@ -48,10 +48,18 @@
 # n_s_values=(1 2)
 # w_p_values=(29 30)
 
-lr_values=(0.0005 0.001)
+# 10/31 best
+# lr_values=(0.0005)
+# adam_weight_decay_values=(0.02)
+# n_s_values=(2)
+# w_p_values=(30)
+
+# Newest
+# lr_values=(0.0001)
+lr_values=(0.00005)
 adam_weight_decay_values=(0.02 0.01)
-n_s_values=(1 2) #(2 5 8 12 15 20) #30
-w_p_values=(30 25) #30
+n_s_values=(1 2 3) #(2 5 8 12 15 20) #30
+w_p_values=(27 28 29) #30
 
 
 
@@ -60,7 +68,7 @@ for lr in "${lr_values[@]}"; do
         for n_s in "${n_s_values[@]}"; do
             for w_p in "${w_p_values[@]}"; do
                 # command="python train_tnt.py -o run/tnt/ -a -c -cd 0 -b 128 --lr $lr -luf 100 -ldr 0.5 -we 1 -e 2 --adam_weight_decay $adam_weight_decay -w_p $w_p"
-                command="python train_tnt.py -o run/tnt/ -a -c -cd 0 -b 128 --lr $lr -luf 50 -ldr 0.75 -we 300 -e 500 --adam_weight_decay $adam_weight_decay -w_p $w_p -n_s $n_s"
+                command="python train_tnt.py -o run/tnt/ -a -c -cd 0 -b 128 --lr $lr -luf 50 -ldr 0.75 -we 500 -e 1000 --adam_weight_decay $adam_weight_decay -w_p $w_p -n_s $n_s"
                 echo "Running command: $command"
                 $command
             done
