@@ -31,23 +31,31 @@ a method for controllable collision scenario generation in autonomous driving.
 
 * [NuScenes-api](https://www.nuscenes.org/nuscenes#download)
 
+<p align="center">
+  <img src="images/model.png" width="85%">
+</p>
+
 ## Usage
 
 ### Preprocessing
 
+To preprocess our COLLIDE data into vectorized representation:
+```
 bash scripts/preprocessing_data.bash
+```
 
 ### Training
+
 To train the condition collision scenario generation model with COLLIDE:
-    ```
-    bash scripts/train.bash
-    ```
+```
+bash scripts/train.bash
+```
 
 ### Inference
 
 To generate prediction results:
 ```
-python test_tnt.py
+python test.py
 ```
 
 ### Video visualization
