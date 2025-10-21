@@ -99,7 +99,7 @@ class TNTTrainer(Trainer):
                  ckpt_path: str = None,
                  verbose: bool = True,
                  positive_weight = 10,
-                 nearest_subgraph = 1
+                 nearest_subgraph = 3
                  ):
         """
         trainer class for vectornet
@@ -1502,6 +1502,8 @@ class TNTTrainer(Trainer):
                                     df_insert = pd.DataFrame(b)
                                     inter_df = pd.concat([inter_df, df_insert], ignore_index=True)
                             ### Interpolation for moving foward with higher FPS###
+                        if not os.path.exists('output_csv_moving_foward_interpolation/'):
+                            os.mkdir('output_csv_moving_foward_interpolation/')
                         inter_df.to_csv('output_csv_moving_foward_interpolation/' + now_scenario + '_foward.csv', index=False)
                         
 
@@ -1536,8 +1538,8 @@ class TNTTrainer(Trainer):
                         # print(now_scenario, collision_flag, attacker_right_flag)
                         if collision_flag == 0:
                             print(collision_flag, attacker_right_flag, now_scenario)
-                        if collision_flag == 2:
-                            inter_df.to_csv('attacker_other_iou_in_test/' + now_scenario + '.csv', index=False)
+                        # if collision_flag == 2:
+                        #     inter_df.to_csv('attacker_other_iou_in_test/' + now_scenario + '.csv', index=False)
 
                         if collision_flag:
                             pred_collision_rate += 1
@@ -1855,10 +1857,10 @@ class TNTTrainer(Trainer):
                         #title = 'Collide GT: ' + attacker_right + ' Ideal Yaw: ' + str(ideal_yaw_offset) + ' Record Yaw: ' + str(abs(round(record_yaw_distance, 2)))
 
                         plt.title(title)
-                        if not attacker_right_flag:
-                            plt.savefig('figures/' + np.array(data.seq_id)[s] + '.png')
-                        if not os.path.isdir(save_folder + '/'+ 'figures'):
-                            os.mkdir(save_folder + '/figures')
+                        # if not os.path.isdir(save_folder + '/'+ 'figures'):
+                        #     os.mkdir(save_folder + '/figures')
+                        # if not attacker_right_flag:
+                        #     plt.savefig('figures/' + np.array(data.seq_id)[s] + '.png')
                         # plt.show()
                         # if all_data_num <= 100:
                             # plt.savefig(save_folder + '/figures/' + split + '_' + np.array(data.seq_id)[s] + '_' + str(round(now_iou, 1)) + '.png')

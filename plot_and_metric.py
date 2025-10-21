@@ -51,29 +51,61 @@ def main(data_source, mode, past_len, interpolation_frame, sav_folder, topo_fold
     scenario_types = ['LC', 'HO', 'RE', 'JC', 'LTAP']
     result_df = pd.DataFrame(columns=["Scenario_Name"] + scenario_types)
     # for scenario_name in sorted(os.listdir(folder)):
-    for scenario_name in sorted(os.listdir(folder), key=lambda x: int(x.split('scene-')[1].split('_')[0])):
+    # for scenario_name in sorted(os.listdir(folder), key=lambda x: int(x.split('scene-')[1].split('_')[0])):
+    for scenario_name in os.listdir(folder):
         scenario_data = {"Scenario_Name": scenario_name.split('_further')[0]}
-
-        town_name = scenario_name.split('_')[4]
-        split_name = scenario_name.split('_')
-        type_name = split_name[5]        
+        if len(scenario_name.split('_')) > 1:
+            town_name = scenario_name.split('_')[4]
+            split_name = scenario_name.split('_')
+            attacker_id = scenario_name.split('_')[9].split('.')[0]
+            type_name = split_name[5]
+            dir_name = split_name[5] + '_' + split_name[6] + '_' + split_name[7] + '_' + split_name[8] + '_' + split_name[9]
+        else:
+            dir_name = scenario_name
         # if int(split_name[6].split('-')[1]) > 50:
         #    continue
-        if int(split_name[6].split('-')[1]) != 292: #93
-           continue
+        # if int(split_name[6].split('-')[1]) != 107: #93
+        #    continue
         print(scenario_name)
-        dir_name = split_name[5] + '_' + split_name[6] + '_' + split_name[7] + '_' + split_name[8] + '_' + split_name[9]
+        
         sav_path = sav_folder + dir_name +  '/'
         if not os.path.exists(sav_path):
             os.makedirs(sav_path)
-        else:
-            continue
+        # else:
+        #     continue
+        
+        ############################
+        if mode == 'Initial nuscenes':
+            if int(scenario_name.split('-')[1]) != 107:
+                continue    
+            for file2 in os.listdir(args.mapping_town_path):
+                if scenario_name in file2:
+                    town_name = file2.split("_")[4]
+                    attacker_id = None # file2.split('_')[9]
+                    type_name = file2.split('_')[5]
         nusc_map = NuScenesMap(dataroot=map_path, map_name=town_name)
         traj_df = pd.read_csv(os.path.join(
             data_source + scenario_name))
-        ############################
         if mode == 'Initial nuscenes':
             traj_df['YAW'] = np.degrees(traj_df['YAW'])
+            timestamps = traj_df["TIMESTAMP"].unique()
+            track_ids = traj_df["TRACK_ID"].unique()
+
+            # 創建時間戳與 TRACK_ID 的完整範圍
+            full_index = pd.MultiIndex.from_product([timestamps, track_ids], names=["TIMESTAMP", "TRACK_ID"])
+
+            # 重新索引數據以填補缺失值
+            traj_df = traj_df.set_index(["TIMESTAMP", "TRACK_ID"])
+            traj_df = traj_df.reindex(full_index)
+
+            # 前向填充和後向填充
+            traj_df = traj_df.groupby(level="TRACK_ID").apply(lambda group: group.ffill().bfill())
+
+            # 重置索引，保存結果
+            traj_df = traj_df.reset_index()
+
+            columns = ["TRACK_ID", "TIMESTAMP", "V", "X", "Y", "YAW"]
+            traj_df = traj_df[columns]
         traj_df.loc[traj_df['X'] == 0, 'X'] = None
         traj_df.loc[traj_df['Y'] == 0, 'Y'] = None
         traj_df[['X', 'Y']] = traj_df.groupby('TRACK_ID')[['X', 'Y']].apply(lambda group: group.ffill().bfill())
@@ -93,17 +125,30 @@ def main(data_source, mode, past_len, interpolation_frame, sav_folder, topo_fold
         d = dict()
         d['scenario_id'] = scenario_name
         split_name = scenario_name.split('_')
-        initial_name = split_name[3] + '_' + split_name[4] + '_' + split_name[6]
+        # initial_name = split_name[3] + '_' + split_name[4] + '_' + split_name[6]
         
-        lane_feature = np.load(topo_folder + initial_name + '.npy', allow_pickle=True)
-        for n in range(len(vehicle_list)):
-            vl = vehicle_list[n].to_numpy()
-            now_id = vl[0][0]
-            data_length = vl.shape[0]
-            if now_id == "ego":
-                forever_present_x = vl[-1][3]
-                forever_present_y = vl[-1][4]
-        attacker_id = scenario_name.split('_')[9].split('.')[0]
+        # lane_feature = np.load(topo_folder + initial_name + '.npy', allow_pickle=True)
+        if mode == 'Initial nuscenes':
+            for n in range(len(vehicle_list)):
+                vl = vehicle_list[n].to_numpy()
+                now_id = vl[0][0]
+                data_length = vl.shape[0]
+                if now_id == "ego":
+                    forever_present_x = vl[8][3]
+                    forever_present_y = vl[8][4]
+                    scenario_length = vl.shape[0]
+            
+
+        else:
+            for n in range(len(vehicle_list)):
+                vl = vehicle_list[n].to_numpy()
+                now_id = vl[0][0]
+                data_length = vl.shape[0]
+                if now_id == "ego":
+                    forever_present_x = vl[-1][3]
+                    forever_present_y = vl[-1][4]
+                    scenario_length = vl.shape[0]
+            attacker_id = scenario_name.split('_')[9].split('.')[0]
         
         for track_id, remain_df in traj_df.groupby('TRACK_ID'):
             fill_dict[track_id] = []
@@ -112,9 +157,11 @@ def main(data_source, mode, past_len, interpolation_frame, sav_folder, topo_fold
         scenario_length = len(vehicle_list[0])
 
         for t in range(1, scenario_length + 1):
+            if t > 8 :
+                continue
             
             fig, ax = nusc_map.render_layers(["drivable_area"])
-            print(initial_name, t)
+            # print(initial_name, t)
             black_patch = mpatches.Rectangle([0, 0], 0, 0, facecolor='darkgray', edgecolor='black', label='Agents')
             black_legend = ax.legend(handles=[black_patch], loc='upper left', bbox_to_anchor=(0.02, 0.98))
             for text in black_legend.get_texts():
@@ -165,6 +212,7 @@ def main(data_source, mode, past_len, interpolation_frame, sav_folder, topo_fold
                 ego_color = 'lightcoral'
             else:
                 ego_color = 'red'
+
 
             ########### trajectory ###########
             # (x_1, y_1) ---- (x_2, y_2)
@@ -351,7 +399,7 @@ def main(data_source, mode, past_len, interpolation_frame, sav_folder, topo_fold
             append_images=images[1:], 
             optimize=True,
             loop=0,
-            duration=100,
+            duration=500,
         )
     result_df.to_csv("scenario_summary.csv", index=False)
 
@@ -813,11 +861,11 @@ def plot_paper_figure(args, mode):
             split_name = scenario_name.split('_')
             attacker_id = scenario_name.split('_')[9].split('.')[0]
             type_name = split_name[5]        
-        # if int(split_name[6].split('-')[1]) != 292: #93
-        #    continue
-
-        if type_name != 'HO':
+        if int(split_name[6].split('-')[1]) != 93: #93
            continue
+
+        # if type_name != 'HO':
+        #    continue
 
         if mode == 'Initial nuscenes':
             if int(scenario_name.split('-')[1]) != 93:
@@ -1309,7 +1357,7 @@ def compare_attacker_speed(ours_folder, strive_folder, save_folder):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
-    mode = 'STRIVE generation'
+    mode = 'Initial nuscenes'
 
     if mode == 'Our generation':
         parser.add_argument('--data_path', type=str, default='output_csv_moving_foward_interpolation_7_24/')
@@ -1359,12 +1407,12 @@ if __name__ == "__main__":
     # parser.add_argument('--interpolation_frame', default=5, type=int)
     args = parser.parse_args()
     # inference
-    # main(args.data_path, mode, args.past_len, args.interpolation_frame, args.save_path, args.topo_folder, args.map_path)
+    main(args.data_path, mode, args.past_len, args.interpolation_frame, args.save_path, args.topo_folder, args.map_path)
     # only_metric_from_tnt_trainer(args.data_path, mode, args.past_len, args.interpolation_frame, args.save_path, args.topo_folder, args.map_path)
     
     # plot_paper_figure(args, mode)
-    compare_attacker_speed(
-    ours_folder="output_csv_7_24", #"output_csv_foward_no_interp",
-    strive_folder="nuscenes_csv_result_on_STRIVE",
-    save_folder="compare_speed_plots/"
-)
+#     compare_attacker_speed(
+#     ours_folder="output_csv_7_24", #"output_csv_foward_no_interp",
+#     strive_folder="nuscenes_csv_result_on_STRIVE",
+#     save_folder="compare_speed_plots/"
+# )
