@@ -1,14 +1,13 @@
 # Controllable Collision Scenario Generation via Collision Pattern Prediction
 
-[![Project Page](https://img.shields.io/badge/Project-Page-blue)](https://plchen86157.github.io/conditional_scenario_generation/)
-[![Video Overview](https://img.shields.io/badge/Video-Overview-red)](https://www.youtube.com/watch?v=W-_sarZqfMo)
-[![arXiv](https://img.shields.io/badge/arXiv-2510.12206-b31b1b.svg)](https://arxiv.org/abs/2510.12206)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Project Page](https://img.shields.io/badge/Project-Page-blue?style=for-the-badge)](https://plchen86157.github.io/conditional_scenario_generation/)
+[![Video Overview](https://img.shields.io/badge/Video-Overview-red?style=for-the-badge)](https://www.youtube.com/watch?v=W-_sarZqfMo)
+[![arXiv](https://img.shields.io/badge/arXiv-2510.12206-b31b1b.svg?style=for-the-badge)](https://arxiv.org/abs/2510.12206)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](LICENSE)
 
 ---
 
-This repository contains the official code for **Controllable Collision Scenario Generation via Collision Pattern Prediction**,  
-a method for controllable collision scenario generation in autonomous driving.
+This repository contains the official code for **Controllable Collision Scenario Generation via Collision Pattern Prediction**, a method for controllable collision scenario generation in autonomous driving.
 
 **Authors:** Pin-Lun Chen, Chi-Hsi Kung, Che-Han Chang, Wei-Chen Chiu, Yi-Ting Chen  
 **Affiliation:** [National Yang Ming Chiao Tung University](https://www.nycu.edu.tw)
@@ -23,10 +22,10 @@ a method for controllable collision scenario generation in autonomous driving.
 --- -->
 
 <p align="center">
-  <img src="images/generated_scenarios.gif" width="85%">
+  <img src="images/Pattern crashes.gif" width="85%">
 </p>
 
-*Generated scenarios covering five representative collision types (Lane Change, Opposite Direction, Rear-End, Junction Crossing, LTAP) with controllable time-to-accident.*
+*We introduce Collision Pattern, a compact and interpretable representation of the relative configuration between ego-attacker at the collision moment. Given a safe scenario, the user specifies collision type and time-to-accident (TTA) to predict collision pattern. This pattern guides the quintic motion planner to generate a feasible attacker trajectory that realizes the specified collision.*
 
 
 ### System Requirements
